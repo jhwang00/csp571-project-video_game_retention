@@ -1,0 +1,23 @@
+Notes on what was done (might be helpful for the report):
+
+Cleaning #1:
+    - tamber was fairly straightforward, just needed to add headers to the file. also there's a column of 0 that remains unused, which was dropped. then duplicates were handled too, even if it can be intentional.
+    - rabieelkharoua kept the same. nothing changed
+    - fronkongames came with a csv and a json file. In the csv file that was downloaded, the values and columns were off and what was supposed to be Discount and DLC count separately got grouped as DiscountDLC count, resulting in entry values being offsetted by one. This has been handled while checking that it matches the value from the json file. Additionally, dropped some useless columns that I doubt we would need and takes up a lot of storage space. After dropping, went from ~382 MB to ~37 MB. Likely to drop or modify remaining columns as we look more into it. Also removed an entry with an AppId but no Name.
+        - Dropped columns include: [
+            "About the game",
+            "Supported languages",
+            "Full audio languages",
+            "Reviews",
+            "Header image",
+            "Website",
+            "Support url",
+            "Support email",
+            "Windows",
+            "Mac",
+            "Linux",
+            "Metacritic url",
+            "Notes",
+            "Screenshots",
+            "Movies",
+        ]
