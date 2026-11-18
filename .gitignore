@@ -32,6 +32,9 @@ data/raw/*
 # !data/raw/.gitkeep
 !data/processed/.gitkeep
 
+# Large Kaggle datasets
+data/raw/games.csv
+
 # OS files
 .DS_Store
 Thumbs.db
