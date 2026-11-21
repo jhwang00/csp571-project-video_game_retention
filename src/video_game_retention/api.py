@@ -49,21 +49,41 @@ def get_steam_player_history(app_id: int, range_: str = "all") -> dict:
 
     return res.json()["data"]
 
-def get_top_games(limit: int = 100) -> list[dict]:
+def get_top_games(limit: int = 100):
     """
-    Get the most played games from SteamIDX
+    Request a batch of most played games from SteamIDX. Limit of up to 100 apps per request.
     """
-
     if not STEAM_INDEX_API_KEY:
         raise ValueError("STEAM_INDEX_API_KEY is not configured.")
 
-    res = requests.get(
-        f"{STEAM_INDEX_API_URL}/charts/most-played",
-        headers={"Authorization": f"Bearer {STEAM_INDEX_API_KEY}"},
-        params={"limit":limit},
-        timeout=30
-    )
+    games = []
+    cursor = None
 
-    res.raise_for_status()
+    while len(games) < limit:
+        page_size = min(100, limit - len(games))
 
-    return res.json()["data"]
+        params = {"limit": page_size}
+        
+        if cursor is not None:
+            params["cursor"] = cursor
+
+        # make a request of 100 apps at a time, create new page for the remaining and repeat
+        res = requests.get(
+            f"{STEAM_INDEX_API_URL}/charts/most-played",
+            headers={"Authorization": f"Bearer {STEAM_INDEX_API_KEY}"},
+            params=params,
+            timeout=30
+        )
+
+        res.raise_for_status()
+        result = res.json()
+
+        # extends because we want to add all element not the whole list
+        games.extend(result["data"])
+
+        cursor = result.get("meta", {}).get("nextCursor")
+
+        if not cursor or not result["data"]:
+            break
+
+    return games
