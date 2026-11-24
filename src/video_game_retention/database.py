@@ -4,6 +4,7 @@ from video_game_retention.config import (
     DATABASE_PATH
 )
 
+# initialize database (Create two tables, games and player_history)
 def init_database():
     DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -27,6 +28,7 @@ def init_database():
             )
         """)
 
+# Fill games table
 def save_game_detail(game):
     with sqlite3.connect(DATABASE_PATH) as conn:
         conn.execute(
@@ -45,6 +47,7 @@ def save_game_detail(game):
             )
         )
 
+# Fill player_history table
 def save_player_history(history):
     rows = [
     (history["appId"], point["at"], point["players"])
@@ -62,7 +65,7 @@ def save_player_history(history):
             rows,
             )
 
-# execute returns a cursor object. fetchall() gets us a list of tuples (row), row[0] is the AppId we want
+# Get all the app_id in database
 def get_database_app_ids():
     with sqlite3.connect(DATABASE_PATH) as conn:
         rows = conn.execute(
@@ -75,5 +78,6 @@ def get_database_app_ids():
             )
             """
         ).fetchall()
-
+        # execute returns a cursor object. 
+        # fetchall() gets us a list of tuples (row), row[0] is the AppId we want
     return {row[0] for row in rows}

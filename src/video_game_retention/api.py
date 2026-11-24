@@ -6,6 +6,7 @@ from video_game_retention.config import (
     STEAM_INDEX_API_URL,
 )
 
+# Fetch games from steamidx API
 def get_steam_game_details(app_id: int) -> dict:
     """
     Fetches game details from the Steam Index API for a given app_id.
@@ -27,7 +28,7 @@ def get_steam_game_details(app_id: int) -> dict:
     return res.json()["data"]
 
 
-
+# Fetch games player history from steamidx API
 def get_steam_player_history(app_id: int, range_: str = "all") -> dict:
     """
     Fetch historical concurrent-player counts for a Steam game.
@@ -49,10 +50,10 @@ def get_steam_player_history(app_id: int, range_: str = "all") -> dict:
 
     return res.json()["data"]
 
+# Request a batch of most played games from SteamIDX. Current limit is 500 - 700 games.
+# Need to implement start at for expansion
 def get_top_games(limit: int = 100):
-    """
-    Request a batch of most played games from SteamIDX. Limit of up to 100 apps per request.
-    """
+
     if not STEAM_INDEX_API_KEY:
         raise ValueError("STEAM_INDEX_API_KEY is not configured.")
 
