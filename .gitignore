@@ -21,7 +21,7 @@ wheels/
 # SQLite databases
 *.db
 *.db
-!data/processed/steam_games.db
+!data/raw/steam_idx.db
 *.db-journal
 *.db-wal
 *.db-shm

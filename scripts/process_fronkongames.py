@@ -60,7 +60,7 @@ rows_after = len(df)
 shape_after = df.shape
 
 if args.sample: # generate sample for easier viewing with --sample flag
-    sample_df = df.sample(n=min(10000, len(df)))
+    sample_df = df.sample(n=min(250, len(df)))
     sample_df.to_csv("data/processed/frokongames_sample.csv", index=False)
 
     print("Rows before cleaning:", rows_before)
