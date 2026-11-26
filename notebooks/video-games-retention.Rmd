@@ -14,6 +14,7 @@ rabie <- read_csv("../data/processed/rabieelkharoua_gaming-behavior.csv")
 fronkon <- read_csv("../data/processed/fronkongames_steam-games.csv", 
   col_types = cols(`Score rank` = col_character())
 )
+steamidx.games <- read.csv("../data/processed/steamidx_games.csv")
 ```
 
 ```{r}
