@@ -1,3 +1,82 @@
+Gameplan:
+
+tamber
+------
+UserID
+GameTitle
+Behavior
+Value
+
+rabieelkharoua (synthetic data -- no point using?)
+--------------
+PlayerID
+Age
+Gender
+Location
+GameGenre
+PlayTimeHours
+InGamePurchases
+GameDifficulty
+SessionsPerWeek
+AvgSessionDurationMinutes
+PlayerLevel
+AchievementsUnlocked
+EngagementLevel
+
+fronkongames
+------------
+AppID
+Name
+Release date
+Estimated owners
+Peak CCU
+Required age
+Price
+Discount
+DLC count
+Metacritic score
+User score
+Positive
+Negative
+Achievements
+Recommendations
+Average playtime forever
+Average playtime two weeks
+Median playtime forever
+Median playtime two weeks
+Developers
+Publishers
+Categories
+Genres
+Tags
+
+steamidx
+--------
+AppID
+Name
+ReleaseDate
+IsFree
+Developers
+Publishers
+Franchises
+Genres
+Categories
+Tags
+TotalReviews
+PositiveReviews
+NegativeReviews
+PositivePercent
+Summary
+Rating
+MetacriticScore
+CurrentPlayers
+CurrentUpdatedAt
+AllTimePeak
+AllTimePeakAt
+GameUpdatedAt
+
+==================================
+
 Notes on what was done by Jiafeng (might be helpful as reference later for the report):
 
 Cleaning #1:
@@ -40,3 +119,7 @@ Cleaning #2:
         "metacritic_url",
         "lastChangeNumber"
     ]
+
+Cleaning #3:
+    - dropped 'Score rank' from fronkongames. Little valid values and mostly same values too. 
+    - added analyze files for fronkongames and steamidx to check for valid values, zero values, and also further analysis into values for categories, genres, and tags.
