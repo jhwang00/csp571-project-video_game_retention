@@ -1,3 +1,80 @@
+#################
+Dataset Overview:
+#################
+------
+tamber:
+Player-level purchasing and playtime behavior, aggregatable into game-level engagement features
+
+UserID | GameTitle | Behavior | Value
+------
+--------------
+rabieelkharoua:
+Synthetic player demographics and engagement metrics-- probably exclude from the research?
+
+PlayerID | Age | Gender | Location | GameGenre | PlayTimeHours | InGamePurchases | GameDifficulty | SessionsPerWeek | AvgSessionDurationMinutes | PlayerLevel | AchievementsUnlocked | EngagementLevel
+--------------
+------------
+fronkongames:
+Broad game metadata, prices, genres, tags, review counts, ratings, achievements, playtime statistics
+
+AppID | Name | Release date | Estimated owners | Peak CCU | Required age | Price | Discount | DLC count | Metacritic score | User score | Positive | Negative | Achievements | Recommendations | Average playtime forever | Average playtime two weeks | Median playtime forever | Median playtime two weeks | Developers | Publishers | Categories | Genres | Tags
+------------
+--------------
+steamidx_games:
+Detailed player counts, all-time peak, current activity, reviews, ratings, and metadata for a smaller set of games (top 500)
+
+AppID | Name | ReleaseDate | IsFree | Developers | Publishers | Franchises | Genres | Categories | Tags | TotalReviews | PositiveReviews | NegativeReviews | PositivePercent | Summary | Rating | MetacriticScore | CurrentPlayers | CurrentUpdatedAt | AllTimePeak | AllTimePeakAt | GameUpdatedAt
+--------------
+-----------------------
+steamidx_player_history:
+Temporal trends in concurrent players, changes in activity, spikes, declines, and forecasting
+
+app_id | observed_at | players
+-----------------------
+
+########
+Thoughts:
+########
+- consider utilizing a combo of fronkongames + steamidx_games + steamidx_player_history (they share AppID)
+    - could also consider integrating Tamber, but need to match by name which may be messy.
+    - drop rabie el kharoua since synthetic
+- for steamidx and fronkongames, likely drop developers and publishers when looking at data, as well as any other irrelevant columns.
+- likewise, genres and categories might be fine, but tag needs to be handled. don't completely drop tags imo since it may be more helpful than genres/categories
+    - we can keep more common tags like we're doing. can also look into multi-hot encoding
+- if doing trend analyses with steamidx_player_history, should avoid game with less than 1 month of data?
+
+#####
+Idea:
+#####
+"How do historical player activity patterns and game characteristics help explain and predict future player activity on Steam?"
+- Rather than trying to focus on predicting individual player retention, predict player activity over time, which steamidx_player_history supports. 
+- Study whether games with certain characteristics have more active/stable player bases, whether recent trends predict future activity, and whether additional information improves prediction performance.
+
+Comparison of features:
+- Set 1: Historical data only
+- Set 2: Historical data + basic metadata (e.g., price, review count, review sentiment, etc.)
+- Set 3: Historical data + basic metadata + genres
+- Set 4: Historical data + basic metadata + genres + tags + categories
+
+Analysis 1
+Exploratory analysis of player activity
+- Examine player-count distributions and trends over time
+- Compare activity across genres and free-to-play vs paid games
+- Investigate relationships between player activity, game characteristics, and review sentiment
+
+Analysis 2
+Supervised learning for player activity prediction
+- Predict average concurrent player count over next 7 days using historical activity and game metadata
+- Compare sets using Linear Regression, Ridge Regression, and Random Forest against historical data (and other feature sets if time)
+- Evaluate performance w/ MAE, RMSE, and R^2
+
+Analysis 3 (optional, if time?)
+Unsupervised learning for game clustering 
+- Group games based on historical player activity patterns
+- Use PCA and K-Means to identify and interpret different profiles
+
+==================================
+
 Notes on what was done by Jiafeng (might be helpful as reference later for the report):
 
 Cleaning #1:
@@ -40,3 +117,7 @@ Cleaning #2:
         "metacritic_url",
         "lastChangeNumber"
     ]
+
+Cleaning #3:
+    - dropped 'Score rank' from fronkongames. Little valid values and mostly same values too. 
+    - added analyze files for fronkongames and steamidx to check for valid values, zero values, and also further analysis into values for categories, genres, and tags.

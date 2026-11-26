@@ -35,3 +35,14 @@ print("Rows after cleaning:", rows_after)
 print("Rows removed:", rows_before - rows_after)
 print("\nShape before cleaning:", shape_before)
 print("Shape after cleaning:", shape_after)
+
+print("\nColumn Summary:")
+summary = pd.DataFrame({
+    "Column": df.columns,
+    "Exists": df.notna().sum().values,
+    "Zeroes": df.eq(0).sum().values,
+    "Total": len(df),
+    "% Exists": (df.notna().sum() / len(df) * 100).round(2).values,
+    "% Zero": (df.eq(0).sum() / len(df) * 100).round(2).values
+})
+print(summary.to_string(index=False))

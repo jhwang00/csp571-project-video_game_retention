@@ -1,0 +1,218 @@
+---
+title: "video-games-retention"
+author: "Jungwoo Hwang, Jiafeng Li, Vincent Richardo"
+date: "2026-11-17"
+output: html_document
+---
+```{r}
+library(readr)
+```
+
+
+```{r}
+df_franko <- read_csv("../data/processed/fronkongames_steam-games.csv")
+df_steam <- read_csv("../data/processed/steamidx_games.csv")
+```
+
+```{r}
+problems(df_franko)
+```
+"Scores" all NA
+
+```{r}
+problems(df_steam)
+```
+
+```{r}
+cols <- c(
+  "Average playtime forever",
+  "Average playtime two weeks",
+  "Median playtime forever",
+  "Median playtime two weeks",
+  "Peak CCU"
+)
+
+sapply(df_franko[cols], summary)
+```
+If we see the 3rd quantile is all 0. Since franko dataset overwhelms steam dataset it would not be reasonable to use it to predict player retention rate.
+
+```{r}
+cols <- c(
+  "Positive",
+  "Negative"
+)
+
+sapply(df_franko[cols], summary)
+```
+Compared to retention related to data, it seems to be more useful.
+Therefore, we changed to use positive/(positive+negative) as a target to measure player satisfaction.
+
+
+Check intersection
+```{r}
+#View(df_franko)
+franko_col <- names(df_franko)
+steam_col <- names(df_steam)
+intersect_col <- intersect(franko_col, steam_col)
+complement_col <- setdiff(union(franko_col, steam_col),intersect(franko_col, steam_col))
+intersect_col
+```
+
+```{r}
+complement_col
+```
+
+```{r}
+setdiff(franko_col, steam_col)
+```
+
+```{r}
+setdiff(steam_col, franko_col)
+```
+
+Columns that can be merged
+   franko       <->      steam
+"Release date"     "ReleaseDate"
+"Price"            "IsFree"             # binarize
+"Positive"         "PositiveReviews"
+"Negative"         "NegativeReviews"
+"Metacritic score" "MetacriticScore"
+
+```{r}
+names(df_franko)[names(df_franko) == "Release date"] <- "ReleaseDate"
+names(df_franko)[names(df_franko) == "Price"] <- "IsFree"
+names(df_franko)[names(df_franko) == "Positive"] <- "PositiveReviews"
+names(df_franko)[names(df_franko) == "Negative"] <- "NegativeReviews"
+names(df_franko)[names(df_franko) == "Metacritic score"] <- "MetacriticScore"
+```
+Change column names first.
+Roughly 7+5=12 columns could be merged
+"Categories" "Genres" "Tags" have multiple types init
+Could parse and cut off with threshold etc
+
+Save columns to be used
+```{r}
+use_col <- c(intersect_col, "ReleaseDate", "IsFree", "PositiveReviews", "NegativeReviews", "MetacriticScore")
+```
+
+
+
+```{r}
+length(intersect(df_franko$AppID, df_steam$AppID))
+```
+Overwrite with steam as it is more lastest data.
+Remove duplicate in Franco
+
+```{r}
+df_franko <- df_franko[!(df_franko$AppID %in% df_steam$AppID), ]
+```
+
+
+
+Checking duplicates result after removing by AppID
+```{r}
+# check duplicate
+sum(duplicated(df_franko$AppID))
+sum(duplicated(df_steam$AppID))
+
+# check na
+sum(is.na(df_franko$AppID))
+sum(is.na(df_steam$AppID))
+```
+No duplicate/na for both datasets
+
+To merge, we need to check datatypes
+```{r}
+str(df_franko[use_col])
+```
+
+```{r}
+str(df_steam[use_col])
+```
+
+"ReleaseDate", "IsFree" should be changed
+Change franko data as we want date to have order.
+For IsFree, having actual price is better however, as steam dataset is in binary, change franko IsFree to binary
+
+```{r}
+Sys.setlocale("LC_TIME", "C") # Because of language setting
+
+df_franko$IsFree <- df_franko$IsFree == 0
+df_franko$ReleaseDate <- as.Date(
+  df_franko$ReleaseDate,
+  format = "%b %d, %Y"
+)
+```
+
+```{r}
+sum(is.na(df_franko["PositiveReviews"]))
+sum(is.na(df_franko["NegativeReviews"]))
+sum(is.na(df_steam["PositiveReviews"]))
+sum(is.na(df_steam["NegativeReviews"]))
+```
+There is no NA values in positive/negative review. Hence we can merge and use it as a target.
+
+```{r}
+df_merged <- rbind(df_franko[,use_col], df_steam[,use_col])
+```
+merge
+
+Create new target positive/(positive+negative)
+```{r}
+df_merged$TotalReviews <- df_merged$PositiveReviews + df_merged$NegativeReviews
+
+df_merged$PlayerSatisfaction <- ifelse(
+  df_merged$TotalReviews > 0,
+  df_merged$PositiveReviews/df_merged$TotalReviews,
+  0
+)
+df_merged$HasReviews <- as.integer(
+  df_merged$PositiveReviews > 0 | df_merged$NegativeReviews > 0
+)
+```
+
+```{r}
+head(df_merged)
+```
+
+Still 1st quantile is 0, more than 25%. We further check exactly how many there are.
+```{r}
+summary(df_merged$PlayerSatisfaction)
+
+sd(df_merged$PlayerSatisfaction)
+var(df_merged$PlayerSatisfaction)
+```
+
+```{r}
+sum(df_merged$PlayerSatisfaction == 0)
+```
+
+```{r}
+sum(
+  df_merged$PositiveReviews == 0 &
+  df_merged$NegativeReviews == 0
+)
+```
+
+```{r}
+sum(is.na(df_merged))
+```
+
+Almost 1/3 of data had no positive and negative reviews. We finally chose to Review analysis. We will first predict which game gets attention(at least one review). Then for games with at least one attention, we will predict the player satisfaction.
+
+Remove positive/negative Reviews as they will be used as target
+```{r}
+df_merged$PositiveReviews <- NULL
+df_merged$NegativeReviews <- NULL
+```
+
+
+```{r}
+write.csv(df_merged, "../data/processed/merged_data.csv", row.names = FALSE, fileEncoding = "UTF-8")
+df <- read_csv("../data/processed/merged_data.csv")
+```
+
+```{r}
+#View(df)
+```
+

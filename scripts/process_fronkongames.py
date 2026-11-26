@@ -39,6 +39,7 @@ drop_columns = [
     "Mac",
     "Linux",
     "Metacritic url",
+    "Score rank",
     "Notes",
     "Screenshots",
     "Movies",

@@ -1,21 +1,21 @@
 # execution: python -m scripts.process_steamidx
 # execution: python3 -m scripts.process_steamidx
 
-import pandas
+import pandas as pd
 import json
 import sqlite3
 
 # Load SQLite database and read from it
 conn = sqlite3.connect("data/raw/steam_idx.db")
-games = pandas.read_sql_query("SELECT * FROM games", conn)
-player_history = pandas.read_sql_query("SELECT * FROM player_history", conn)
+games = pd.read_sql_query("SELECT * FROM games", conn)
+player_history = pd.read_sql_query("SELECT * FROM player_history", conn)
 
 conn.close()
 
 details = games["details_json"].apply(json.loads)
 
 # Extract selected fields into individual columns
-games_clean = pandas.DataFrame({
+games_clean = pd.DataFrame({
     "AppID": games["app_id"],
     "Name": games["name"],
     "ReleaseDate": details.apply(lambda x: x.get("releaseDate")),
@@ -44,4 +44,6 @@ games_clean = pandas.DataFrame({
 games_clean.to_csv("data/processed/steamidx_games.csv", index=False)
 player_history.to_csv("data/processed/steamidx_player_history.csv", index=False)
 
+print("Rows in games_clean:", len(games_clean))
+print("Rows in player_history:", len(player_history))
 

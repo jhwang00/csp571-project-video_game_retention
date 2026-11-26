@@ -12,3 +12,9 @@ Run from csp571-project-video_game_retention.
 - `python -m scripts.process_rabieelkharoua`
 - `python -m scripts.process_fronkongames` (to open up a smaller sample file for easier viewing, `python -m scripts.process_fronkongames --sample`)
 - `python -m scripts.process_steamidx`
+
+## Data Analyzing (/data/processed/):
+Run from csp571-project-video_game_retention.
+- `python -m scripts.analyze_fronkongames`
+- `python -m scripts.analyze_steamidx_games`
+- 'python -m scripts.analyze_steamidx_player_history'

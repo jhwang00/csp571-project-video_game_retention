@@ -11,10 +11,7 @@ library(readr)
 ```{r}
 tamber <- read_csv("../data/processed/tamber_steam-video-games.csv")
 rabie <- read_csv("../data/processed/rabieelkharoua_gaming-behavior.csv")
-fronkon <- read_csv("../data/processed/fronkongames_steam-games.csv", 
-  col_types = cols(`Score rank` = col_character())
-)
-steamidx.games <- read.csv("../data/processed/steamidx_games.csv")
+fronkon <- read_csv("../data/processed/fronkongames_steam-games.csv")
 ```
 
 ```{r}
