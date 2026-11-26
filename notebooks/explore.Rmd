@@ -1,0 +1,237 @@
+---
+title: "video-games-retention"
+author: "Jungwoo Hwang, Jiafeng Li, Vincent Richardo"
+date: "2026-11-26"
+output: html_document
+---
+```{r}
+library(readr)
+```
+
+```{r}
+df <- read_csv("../data/processed/merged_data.csv")
+```
+
+Check duplicates
+```{r}
+sum(duplicated(df))
+
+sum(duplicated(df$AppID))
+```
+
+```{r}
+# NA count
+colSums(is.na(df))
+sum(!complete.cases(df))
+```
+Since categories, genres, and tags have multiple types, split and check types, freq
+
+```{r}
+#View(df)
+categories <- strsplit(na.omit(df$Categories), ",")
+genres <- strsplit(na.omit(df$Genres), ",")
+tags <- strsplit(na.omit(df$Tags), ",")
+```
+
+```{r}
+categories <- trimws(unlist(categories))
+genres <- trimws(unlist(genres))
+tags <- trimws(unlist(tags))
+
+# Remove empty
+categories <- categories[categories != ""]
+genres <- genres[genres != ""]
+tags <- tags[tags != ""]
+
+# Unique count
+length(unique(categories))
+length(unique(genres))
+length(unique(tags))
+```
+
+```{r}
+category_counts <- sort(table(categories), decreasing = TRUE)
+genre_counts <- sort(table(genres), decreasing = TRUE)
+tag_counts <- sort(table(tags), decreasing = TRUE)
+```
+
+```{r}
+head(category_counts, 20)
+head(genre_counts, 20)
+head(tag_counts, 20)
+```
+
+```{r}
+barplot(
+  category_counts,
+  main = "Top 20 Categories"
+)
+```
+
+```{r}
+barplot(
+  genre_counts,
+  main = "Top 20 Genres"
+)
+```
+
+```{r}
+barplot(
+  tag_counts,
+  main = "Top 20 Tags"
+)
+```
+
+
+```{r}
+summary(as.numeric(category_counts))
+summary(as.numeric(genre_counts))
+summary(as.numeric(tag_counts))
+```
+
+```{r}
+y_max <- max(category_counts, genre_counts, tag_counts)
+
+par(mfrow = c(1, 3))
+
+boxplot(as.numeric(category_counts),
+        main = "Categories",
+        ylab = "Frequency",
+        ylim = c(0, y_max))
+
+boxplot(as.numeric(genre_counts),
+        main = "Genres",
+        ylab = "Frequency",
+        ylim = c(0, y_max))
+
+boxplot(as.numeric(tag_counts),
+        main = "Tags",
+        ylab = "Frequency",
+        ylim = c(0, y_max))
+
+par(mfrow = c(1, 1))
+```
+```{r}
+str(df)
+```
+
+
+
+```{r}
+total_sample = nrow(df)
+category_ratio <- category_counts / total_sample
+genre_ratio <- genre_counts / total_sample
+tag_ratio <- tag_counts / total_sample
+```
+
+To avoid too specific types, we set threshold 1% for categories and genres and 5% for tags. We chose higher threshold for tags as it is more diverse but skewed to certain tags making the dataset too sparse and unique.
+```{r}
+threshold <- 0.01
+threshold_tag <- 0.05
+
+selected_categories <- names(category_ratio[category_ratio >= threshold])
+selected_genres <- names(genre_ratio[genre_ratio >= threshold])
+selected_tags <- names(tag_ratio[tag_ratio >= threshold_tag])
+```
+
+```{r}
+length(selected_categories)
+length(selected_genres)
+length(selected_tags)
+```
+
+Check if there is duplicates
+e.g. Action in categories and Action in tags
+```{r}
+common1 <- unique(intersect(selected_categories, selected_genres))
+common2 <- unique(intersect(selected_categories, selected_tags))
+common3 <- unique(intersect(selected_tags, selected_genres))
+
+length(common1)
+length(common2)
+length(common3)
+```
+There is duplicate that can cause multicolinearity between genres and tags.
+
+```{r}
+common3
+```
+
+Remove those in tags
+```{r}
+duplicate_tags <- c(
+  "Indie", "Action", "Casual",
+  "Adventure", "Simulation", "Strategy",
+  "RPG", "Early Access"
+)
+
+selected_tags <- setdiff(selected_tags, duplicate_tags)
+```
+
+Make each selected types in features as features
+```{r}
+selected_features <- make.names(
+  c(
+    paste0("Category_", selected_categories),
+    paste0("Genre_", selected_genres),
+    paste0("Tag_", selected_tags)
+  )
+)
+
+df[selected_features] <- 0L
+```
+
+```{r}
+# ChatGPT for filling function
+fill_features <- function(df, column, selected, prefix) {
+
+  values <- df[[column]]
+  values[is.na(values)] <- ""
+
+  split_values <- strsplit(values, ",")
+  split_values <- lapply(split_values, trimws)
+
+  for (feature in selected) {
+
+    feature_name <- make.names(paste0(prefix, "_", feature))
+
+    df[[feature_name]] <- as.integer(
+      sapply(split_values, function(x) {
+        feature %in% x
+      })
+    )
+  }
+
+  return(df)
+}
+
+
+df <- fill_features(
+  df, "Categories", selected_categories, "Category"
+)
+
+df <- fill_features(
+  df, "Genres", selected_genres, "Genre"
+)
+
+df <- fill_features(
+  df, "Tags", selected_tags, "Tag"
+)
+```
+
+Remove categories, genres, tags as they are now used with one hot encoding
+```{r}
+df$Categories <- NULL
+df$Genres <- NULL
+df$Tags <- NULL
+```
+
+
+```{r}
+write.csv(df, "../data/processed/merged_data2.csv", row.names = FALSE, fileEncoding = "UTF-8")
+df2 <- read_csv("../data/processed/merged_data2.csv")
+```
+
+```{r}
+names(df2)
+```

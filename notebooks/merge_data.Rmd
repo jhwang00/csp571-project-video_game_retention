@@ -23,7 +23,32 @@ problems(df_franko)
 problems(df_steam)
 ```
 
+```{r}
+cols <- c(
+  "Average playtime forever",
+  "Average playtime two weeks",
+  "Median playtime forever",
+  "Median playtime two weeks",
+  "Peak CCU"
+)
 
+sapply(df_franko[cols], summary)
+```
+If we see the 3rd quantile is all 0. Since franko dataset overwhelms steam dataset it would not be reasonable to use it to predict player retention rate.
+
+```{r}
+cols <- c(
+  "Positive",
+  "Negative"
+)
+
+sapply(df_franko[cols], summary)
+```
+Compared to retention related to data, it seems to be more useful.
+Therefore, we changed to use positive/(positive+negative) as a target to measure player satisfaction.
+
+
+Check intersection
 ```{r}
 #View(df_franko)
 franko_col <- names(df_franko)
@@ -45,9 +70,10 @@ setdiff(franko_col, steam_col)
 setdiff(steam_col, franko_col)
 ```
 
+Columns that can be merged
    franko       <->      steam
 "Release date"     "ReleaseDate"
-"Price"            "IsFree"             # binarize maybe
+"Price"            "IsFree"             # binarize
 "Positive"         "PositiveReviews"
 "Negative"         "NegativeReviews"
 "Metacritic score" "MetacriticScore"
@@ -64,6 +90,7 @@ Roughly 7+5=12 columns could be merged
 "Categories" "Genres" "Tags" have multiple types init
 Could parse and cut off with threshold etc
 
+Save columns to be used
 ```{r}
 use_col <- c(intersect_col, "ReleaseDate", "IsFree", "PositiveReviews", "NegativeReviews", "MetacriticScore")
 ```
@@ -82,7 +109,7 @@ df_franko <- df_franko[!(df_franko$AppID %in% df_steam$AppID), ]
 
 
 
-# 1. Checking duplicates
+Checking duplicates result after removing by AppID
 ```{r}
 # check duplicate
 sum(duplicated(df_franko$AppID))
@@ -94,6 +121,7 @@ sum(is.na(df_steam$AppID))
 ```
 No duplicate/na for both datasets
 
+To merge, we need to check datatypes
 ```{r}
 str(df_franko[use_col])
 ```
@@ -103,11 +131,13 @@ str(df_steam[use_col])
 ```
 
 "ReleaseDate", "IsFree" should be changed
-Change franko. Add IsFree column and Release date"
+Change franko data as we want date to have order.
+For IsFree, having actual price is better however, as steam dataset is in binary, change franko IsFree to binary
 
 ```{r}
 Sys.setlocale("LC_TIME", "C") # Because of language setting
 
+df_franko$IsFree <- df_franko$IsFree == 0
 df_franko$ReleaseDate <- as.Date(
   df_franko$ReleaseDate,
   format = "%b %d, %Y"
@@ -115,127 +145,74 @@ df_franko$ReleaseDate <- as.Date(
 ```
 
 ```{r}
-#View(df_franko)
+sum(is.na(df_franko["PositiveReviews"]))
+sum(is.na(df_franko["NegativeReviews"]))
+sum(is.na(df_steam["PositiveReviews"]))
+sum(is.na(df_steam["NegativeReviews"]))
 ```
-
+There is no NA values in positive/negative review. Hence we can merge and use it as a target.
 
 ```{r}
 df_merged <- rbind(df_franko[,use_col], df_steam[,use_col])
-write.csv(df_merged, "../data/processed/merged_data.csv", row.names = FALSE, fileEncoding = "UTF-8")
 ```
-merge, save
+merge
+
+Create new target positive/(positive+negative)
+```{r}
+df_merged$TotalReviews <- df_merged$PositiveReviews + df_merged$NegativeReviews
+
+df_merged$PlayerSatisfaction <- ifelse(
+  df_merged$TotalReviews > 0,
+  df_merged$PositiveReviews/df_merged$TotalReviews,
+  0
+)
+df_merged$HasReviews <- as.integer(
+  df_merged$PositiveReviews > 0 | df_merged$NegativeReviews > 0
+)
+```
 
 ```{r}
+head(df_merged)
+```
+
+Still 1st quantile is 0, more than 25%. We further check exactly how many there are.
+```{r}
+summary(df_merged$PlayerSatisfaction)
+
+sd(df_merged$PlayerSatisfaction)
+var(df_merged$PlayerSatisfaction)
+```
+
+```{r}
+sum(df_merged$PlayerSatisfaction == 0)
+```
+
+```{r}
+sum(
+  df_merged$PositiveReviews == 0 &
+  df_merged$NegativeReviews == 0
+)
+```
+
+```{r}
+sum(is.na(df_merged))
+```
+
+Almost 1/3 of data had no positive and negative reviews. We finally chose to Review analysis. We will first predict which game gets attention(at least one review). Then for games with at least one attention, we will predict the player satisfaction.
+
+Remove positive/negative Reviews as they will be used as target
+```{r}
+df_merged$PositiveReviews <- NULL
+df_merged$NegativeReviews <- NULL
+```
+
+
+```{r}
+write.csv(df_merged, "../data/processed/merged_data.csv", row.names = FALSE, fileEncoding = "UTF-8")
 df <- read_csv("../data/processed/merged_data.csv")
 ```
 
-Check duplicates
-```{r}
-sum(duplicated(df))
-
-sum(duplicated(df$AppID))
-```
-
-```{r}
-# NA count
-colSums(is.na(df))
-sum(!complete.cases(df))
-```
-
-Since categories, geners, and tags have multiple types, split and check types, freq
 ```{r}
 #View(df)
-categories <- strsplit(na.omit(df_merged$Categories), ",")
-genres <- strsplit(na.omit(df_merged$Genres), ",")
-tags <- strsplit(na.omit(df_merged$Tags), ",")
 ```
-
-```{r}
-categories <- trimws(unlist(categories))
-genres <- trimws(unlist(genres))
-tags <- trimws(unlist(tags))
-
-# Remove empty
-categories <- categories[categories != ""]
-genres <- genres[genres != ""]
-tags <- tags[tags != ""]
-
-# Unique count
-length(unique(categories))
-length(unique(genres))
-length(unique(tags))
-```
-
-```{r}
-category_counts <- sort(table(categories), decreasing = TRUE)
-genre_counts <- sort(table(genres), decreasing = TRUE)
-tag_counts <- sort(table(tags), decreasing = TRUE)
-```
-
-```{r}
-head(category_counts, 20)
-head(genre_counts, 20)
-head(tag_counts, 20)
-```
-
-```{r}
-barplot(
-  category_counts,
-  main = "Top 20 Categories"
-)
-```
-
-```{r}
-barplot(
-  genre_counts,
-  main = "Top 20 Genres"
-)
-```
-
-```{r}
-barplot(
-  tag_counts,
-  main = "Top 20 Tags"
-)
-```
-
-
-```{r}
-summary(as.numeric(category_counts))
-summary(as.numeric(genre_counts))
-summary(as.numeric(tag_counts))
-```
-
-
-
-```{r}
-total_sample = nrow(df)
-category_ratio <- category_counts / total_sample
-genre_ratio <- genre_counts / total_sample
-tag_ratio <- tag_counts / total_sample
-```
-
-set threshold 5%
-10% for tag as
-```{r}
-threshold <- 0.05
-threshold_tag <- 0.1
-
-selected_categories <- names(category_ratio[category_ratio >= threshold])
-selected_genres <- names(genre_ratio[genre_ratio >= threshold])
-selected_tags <- names(tag_ratio[tag_ratio >= threshold])
-```
-
-```{r}
-length(selected_categories)
-length(selected_genres)
-length(selected_tags)
-```
-
-
-
-
-
-
-
 
