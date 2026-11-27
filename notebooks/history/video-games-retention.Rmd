@@ -16,9 +16,9 @@ library(lubridate)
 
 Part 1: Loading datasets into R
 ```{r}
-player_history <- read_csv("data/processed/steamidx_player_history.csv")
-steamidx_games <- read_csv("data/processed/steamidx_games.csv")
-fronkongames <- read_csv("data/processed/fronkongames_steam-games.csv")
+player_history <- read_csv("data/semi_processed/steamidx_player_history.csv")
+steamidx_games <- read_csv("data/semi_processed/steamidx_games.csv")
+fronkongames <- read_csv("data/semi_processed/fronkongames_steam-games.csv")
 ```
 
 ```{r}

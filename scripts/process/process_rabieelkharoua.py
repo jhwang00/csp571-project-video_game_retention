@@ -1,5 +1,5 @@
-# execution: python -m scripts.process_rabieelkharoua
-# execution: python3 -m scripts.process_rabieelkharoua
+# execution: python -m scripts.process.process_rabieelkharoua
+# execution: python3 -m scripts.process.process_rabieelkharoua
 
 import pandas as pd
 
@@ -28,7 +28,7 @@ df = df[df["EngagementLevel"].isin(["High", "Medium", "Low"])]
 rows_after = len(df)
 shape_after = df.shape
 
-df.to_csv("data/processed/rabieelkharoua_gaming-behavior.csv", index=False)
+df.to_csv("data/semi_processed/rabieelkharoua_gaming-behavior.csv", index=False)
 
 print("Rows before cleaning:", rows_before)
 print("Rows after cleaning:", rows_after)

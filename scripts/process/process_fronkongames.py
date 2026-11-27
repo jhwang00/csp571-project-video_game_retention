@@ -1,5 +1,5 @@
-# execution: python -m scripts.process_fronkongames
-# execution: python3 -m scripts.process_fronkongames
+# execution: python -m scripts.process.process_fronkongames
+# execution: python3 -m scripts.process.process_fronkongames
 # optional: [--sample]
 
 import csv
@@ -62,12 +62,12 @@ shape_after = df.shape
 
 if args.sample: # generate sample for easier viewing with --sample flag
     sample_df = df.sample(n=min(250, len(df)))
-    sample_df.to_csv("data/processed/frokongames_sample.csv", index=False)
+    sample_df.to_csv("data/semi_processed/frokongames_sample.csv", index=False)
 
     print("Rows before cleaning:", rows_before)
     print("Sample rows:", len(sample_df))
 else:
-    df.to_csv("data/processed/fronkongames_steam-games.csv", index=False)
+    df.to_csv("data/semi_processed/fronkongames_steam-games.csv", index=False)
 
     print("Rows before cleaning:", rows_before)
     print("Rows after cleaning:", rows_after)

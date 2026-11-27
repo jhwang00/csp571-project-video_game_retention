@@ -1,11 +1,11 @@
-# execution: python -m scripts.analyze_fronkongames
-# execution: python3 -m scripts.analyze_fronkongames
+# execution: python -m scripts.analyze.analyze_steamidx_games
+# execution: python3 -m scripts.analyze.analyze_steamidx_games
 
 import csv
 import pandas as pd
 import argparse
 
-file_path = "data/processed/fronkongames_steam-games.csv"
+file_path = "data/semi_processed/steamidx_games.csv"
 with open(file_path, newline="") as file:
     reader = csv.reader(file)
     columns = next(reader)

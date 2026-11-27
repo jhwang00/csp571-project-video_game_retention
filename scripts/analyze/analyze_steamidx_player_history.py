@@ -1,11 +1,11 @@
-# execution: python -m scripts.analyze_steamidx_player_history
-# execution: python3 -m scripts.analyze_steamidx_player_history
+# execution: python -m scripts.analyze.analyze_steamidx_player_history
+# execution: python3 -m scripts.analyze.analyze_steamidx_player_history
 
 import csv
 import pandas as pd
 import argparse
 
-file_path = "data/processed/steamidx_player_history.csv"
+file_path = "data/semi_processed/steamidx_player_history.csv"
 with open(file_path, newline="") as file:
     reader = csv.reader(file)
     columns = next(reader)

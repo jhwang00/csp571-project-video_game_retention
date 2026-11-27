@@ -52,7 +52,7 @@ def collect_game(app_id):
 
     
 fronkon_df = pd.read_csv(
-PROJECT_ROOT / "data" / "processed" / "fronkongames_steam-games.csv"
+PROJECT_ROOT / "data" / "semi_processed" / "fronkongames_steam-games.csv"
 )
 
 

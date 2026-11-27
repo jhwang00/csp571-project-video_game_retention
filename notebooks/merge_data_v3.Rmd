@@ -10,7 +10,7 @@ library(readr)
 ```
 
 ```{r}
-df_history <- read_csv("../data/processed/steamidx_player_history.csv")
+df_history <- read_csv("../data/semi_processed/steamidx_player_history.csv")
 ```
 
 ```{r}

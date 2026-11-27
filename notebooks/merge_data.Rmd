@@ -10,8 +10,8 @@ library(readr)
 
 
 ```{r}
-df_franko <- read_csv("../data/processed/fronkongames_steam-games.csv")
-df_steam <- read_csv("../data/processed/steamidx_games.csv")
+df_franko <- read_csv("../data/semi_processed/fronkongames_steam-games.csv")
+df_steam <- read_csv("../data/semi_processed/steamidx_games.csv")
 ```
 
 ```{r}

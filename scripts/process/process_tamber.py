@@ -1,5 +1,5 @@
-# execution: python -m scripts.process_tamber
-# execution: python3 -m scripts.process_tamber
+# execution: python -m scripts.process.process_tamber
+# execution: python3 -m scripts.process.process_tamber
 
 import pandas as pd
 
@@ -43,7 +43,7 @@ df = df.drop_duplicates()
 rows_after = len(df)
 shape_after = df.shape
 
-df.to_csv("data/processed/tamber_steam-video-games.csv", index=False)
+df.to_csv("data/semi_processed/tamber_steam-video-games.csv", index=False)
 
 print("Rows before cleaning:", rows_before)
 print("Rows after cleaning:", rows_after)

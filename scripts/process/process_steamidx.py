@@ -1,5 +1,5 @@
-# execution: python -m scripts.process_steamidx
-# execution: python3 -m scripts.process_steamidx
+# execution: python -m scripts.process.process_steamidx
+# execution: python3 -m scripts.process.process_steamidx
 
 import pandas as pd
 import json
@@ -41,8 +41,8 @@ games_clean = pd.DataFrame({
 })
 
 # csv export
-games_clean.to_csv("data/processed/steamidx_games.csv", index=False)
-player_history.to_csv("data/processed/steamidx_player_history.csv", index=False)
+games_clean.to_csv("data/semi_processed/steamidx_games.csv", index=False)
+player_history.to_csv("data/semi_processed/steamidx_player_history.csv", index=False)
 
 print("Rows in games_clean:", len(games_clean))
 print("Rows in player_history:", len(player_history))
