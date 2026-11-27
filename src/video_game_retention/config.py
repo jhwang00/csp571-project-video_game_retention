@@ -14,4 +14,4 @@ STEAM_INDEX_API_KEY = os.getenv("STEAM_INDEX_API_KEY")
 STEAM_INDEX_API_URL = "https://public-api.steamidx.com/v1"
 
 # DB save path
-DATABASE_PATH = PROJECT_ROOT / "data" / "processed" / "steam_idx.db"
+DATABASE_PATH = PROJECT_ROOT / "data" / "raw" / "steam_idx.db"
