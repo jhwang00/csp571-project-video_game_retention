@@ -1,0 +1,177 @@
+---
+title: "video-games-retention"
+author: "Jungwoo Hwang, Jiafeng Li, Vincent Richardo"
+date: "2026-11-17"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "~/Courses/CSP571/csp571-project-video_game_retention") # might need to modify
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+Part 1: Loading datasets into R
+```{r}
+player_history <- read_csv("data/processed/steamidx_player_history.csv")
+steamidx_games <- read_csv("data/processed/steamidx_games.csv")
+fronkongames <- read_csv("data/processed/fronkongames_steam-games.csv")
+```
+
+```{r}
+head(player_history)
+head(steamidx_games)
+head(fronkongames)
+```
+
+```{r}
+summary(player_history)
+
+player_history %>% count(app_id) %>% summary() # observatios per game
+
+player_history %>%
+  summarise(
+    earliest_date = min(observed_at),
+    latest_date = max(observed_at),
+    unique_games = n_distinct(app_id),
+    total_observations = n()
+  )
+```
+
+Part 2: Engineering features for player_history
+
+Checking some stuff first before engineering features
+```{r}
+player_history <- player_history %>% mutate(observed_at = as.Date(observed_at))
+
+player_history %>% count(app_id, observed_at) %>% filter(n > 1) # check for potential records for same game on same date
+```
+```{r}
+player_features <- player_history %>% group_by(app_id) %>% arrange(observed_at) %>%
+  summarise(
+    start_date = min(observed_at), # first recorded date of data
+    end_date = max(observed_at), # last recorded date of data
+    observations = n(), # number of observations for a game
+    timespan = as.numeric(end_date - start_date) + 1, # amount of days between start and end dates
+    coverage_percent = round((observations / timespan) * 100, 2), # % of days covered by observation_days in overall timespan of recorded data
+
+    avg_players = round(mean(players, na.rm = TRUE), 3), 
+    median_players = round(median(players, na.rm = TRUE), 3),
+    sd_players = round(sd(players, na.rm = TRUE), 3),
+    min_players = min(players, na.rm = TRUE),
+    max_players = max(players, na.rm = TRUE),
+
+    zero_percent = round(mean(players == 0, na.rm = TRUE) * 100, 2), # % of observations w/ zero players
+    first_players = first(players), # amount of players on first observation of a game
+    last_players = last(players), # amount of players on last observation of a game
+    absolute_change = last_players - first_players, # overall change in players throughout timespan
+    percent_change = if_else(first_players != 0,
+      round((last_players - first_players) / first_players * 100, 2), NA_real_
+    ), # % change from first to last observation
+
+    recent_7d_avg = round(mean(players[observed_at >= end_date - 6], na.rm = TRUE), 2), # most recent 7 day average
+    recent_14d_avg = round(mean(players[observed_at >= end_date - 13], na.rm = TRUE), 2), # most recent 14 day average
+    trend_slope = {
+      day_index = as.numeric(observed_at - start_date)
+      round(coef(lm(players ~ day_index))[2], 3)
+    }, # estimated daily change in players over observation period
+
+    .groups = "drop"
+  )
+```
+
+```{r}
+head(player_features)
+
+player_features %>% summary()
+
+player_features %>% arrange(desc(avg_players)) %>% head() # games with highest avg concurrent player counts
+player_features %>% arrange(desc(percent_change)) %>% head() # games with largest increases
+player_features %>% arrange(percent_change) %>% head() # games with largest decreases
+```
+```{r}
+write_csv(player_features, "data/processed/player_features.csv")
+```
+
+Part 3: Merging with AppID
+
+Initial checks
+```{r}
+# check for any AppIDs with more than one row
+steamidx_games %>% count(AppID) %>% filter(n > 1) 
+fronkongames %>% count(AppID) %>% filter(n > 1)
+
+class(player_features$app_id)
+class(steamidx_games$AppID)
+class(fronkongames$AppID)
+```
+Merging player_features with steamidx_games first
+```{r}
+player_features_merged <- player_features %>% left_join(steamidx_games, by = c("app_id" = "AppID")) # left join players_features into steamidx_games
+
+nrow(player_features)
+nrow(player_features_merged)
+
+player_features_merged %>%
+  summarise(
+    total_games = n(),
+    matched_games = sum(!is.na(Name)),
+    unmatched_games = sum(is.na(Name))
+  )
+
+player_features_merged %>% count(app_id) %>% filter(n > 1) # check for duplicated games if any
+```
+Then merging into fronkongames
+```{r}
+names(fronkongames)
+
+fronk_selected <- fronkongames %>%
+  select(
+    AppID,
+    "Price",
+    "DLC count",
+    "Metacritic score",
+    "Achievements",
+    "Recommendations",
+    "Average playtime two weeks",
+    "Average playtime forever",
+    "Median playtime two weeks",
+    "Median playtime forever",
+  ) %>% mutate(fronk_match = TRUE)
+
+head(fronk_selected)
+
+player_features_merged2 <- player_features_merged %>% left_join(fronk_selected, by = c("app_id" = "AppID"))
+```
+
+```{r}
+player_features_merged2 %>%
+  summarise(
+    total_games = n(),
+    matched_fronk = sum(!is.na(fronk_match)),
+    unmatched_fronk = sum(is.na(fronk_match)),
+    match_percent = round(mean(!is.na(fronk_match)) * 100, 2)
+  )
+
+write_csv(player_features_merged2, "data/processed/player_features_steamidx-fronk_merged.csv")
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+Part 4: Building forecast dataset
+```{r}
+
+```

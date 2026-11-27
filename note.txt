@@ -121,3 +121,22 @@ Cleaning #2:
 Cleaning #3:
     - dropped 'Score rank' from fronkongames. Little valid values and mostly same values too. 
     - added analyze files for fronkongames and steamidx to check for valid values, zero values, and also further analysis into values for categories, genres, and tags.
+
+Cleaning #4:
+    - merged steamidx_player_history by aggregating results for each app via avg, median, std dev, min, max, deviation, percent change, recent averages, and slope, all engineered in
+    - merged the above with steamidx, and then with fronk. for fronk, dropped the following columns while merging: [
+        AppID,
+        Name,
+        Release Date,
+        Estimated Owners, # not useful
+        Peak CCU, # outdated vs api data from steamidx
+        Required age,
+        Discount,
+        User score, # outdated vs api data
+        Positive, # outdated vs api data
+        Negative, # outdated vs api data
+        Developers, 
+        Publishers,
+        Categories,
+        Tags
+    ]
