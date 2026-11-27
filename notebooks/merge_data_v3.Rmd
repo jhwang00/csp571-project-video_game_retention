@@ -1,0 +1,184 @@
+---
+title: "video-games-retention"
+author: "Jungwoo Hwang, Jiafeng Li, Vincent Richardo"
+date: "2026-11-26"
+output: html_document
+---
+
+```{r}
+library(readr)
+```
+
+```{r}
+df_history <- read_csv("../data/processed/steamidx_player_history.csv")
+```
+
+```{r}
+str(df_history)
+```
+
+```{r}
+# Convert to dates
+df_history$Date <- as.Date(
+  df_history$observed_at,
+  format = "%Y-%m-%d"
+)
+
+head(df_history)
+
+```
+
+```{r}
+# Group observation dates by AppID
+dates_by_game <- split(
+  df_history$Date,
+  df_history$app_id
+)
+
+# Sort and remove duplicate
+dates_by_game <- lapply(dates_by_game, function(x) {
+  sort(unique(x))
+})
+```
+
+```{r}
+# Check whether each game has gaps between observation dates
+has_gap <- sapply(dates_by_game, function(x) {
+  any(diff(x) > 1)
+})
+
+# Count games with non-consecutive observation dates
+sum(has_gap)
+
+# Count games with consecutive observation dates
+sum(!has_gap)
+
+# Identify AppIDs with non-consecutive observation dates
+#gap_ids <- names(has_gap[has_gap])
+
+```
+
+```{r}
+# summary of the observation period for each game
+period_summary <- data.frame(
+  app_id = names(dates_by_game),
+
+  # First observation date
+  StartDate = as.Date(sapply(dates_by_game, min),
+                      origin = "1970-01-01"),
+
+  # Last observation date
+  EndDate = as.Date(sapply(dates_by_game, max),
+                    origin = "1970-01-01"),
+
+  # Number of unique observed dates
+  ObservedDays = lengths(dates_by_game)
+)
+
+# Calculate the total number of days between the first
+# and last observation dates, inclusive
+period_summary$TotalDays <- as.integer(
+  period_summary$EndDate - period_summary$StartDate
+) + 1
+
+# Calculate the number of missing days within each observation period
+period_summary$MissingDays <- 
+  period_summary$TotalDays - period_summary$ObservedDays
+
+# Check whether the observation period is continuous
+period_summary$Continuous <- period_summary$MissingDays == 0
+
+View(period_summary)
+```
+
+
+```{r}
+mean(period_summary$ObservedDays)
+```
+
+```{r}
+summary(period_summary$MissingDays)
+```
+
+```{r}
+end_date <- as.Date("2026-11-21")
+
+# end time
+end_dates <- sapply(dates_by_game, function(x) {
+  as.character(max(x))
+})
+
+table(end_dates)
+
+# game with diff end time
+sum(end_dates != as.character(end_date))
+
+# Retain only games whose last observation date matches the common end date
+selected_games <- dates_by_game[
+  end_dates == as.character(end_date)
+]
+```
+
+```{r}
+period_result <- data.frame()
+
+for (days in 1:76) {
+
+  start_date <- end_date - (days - 1)
+
+  expected_dates <- seq(
+    start_date, end_date, by = "day"
+  )
+
+  # games observed before
+  eligible_games <- Filter(function(x) {
+    min(x) <= start_date
+  }, selected_games)
+
+  # missing days per game
+  missing_days <- sapply(eligible_games, function(x) {
+    sum(!expected_dates %in% x)
+  })
+
+  period_result <- rbind(
+    period_result,
+    data.frame(
+      Days = days,
+      StartDate = start_date,
+      EndDate = end_date,
+      Games = length(eligible_games),
+      CompleteGames = sum(missing_days == 0),
+      IncompleteGames = sum(missing_days > 0),
+      MissingDays = sum(missing_days)
+    )
+  )
+}
+```
+
+```{r}
+plot(
+  period_result$Days,
+  period_result$CompleteGames,
+  type = "l",
+  xlab = "Observation Period (Days)",
+  ylab = "Number of Games",
+  main = "Complete Games by Observation Period"
+)
+
+plot(
+  period_result$Days,
+  period_result$MissingDays,
+  type = "l",
+  xlab = "Observation Period (Days)",
+  ylab = "Missing Days",
+  main = "Missing Days by Observation Period"
+)
+```
+
+
+
+
+
+
+
+
